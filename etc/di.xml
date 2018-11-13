@@ -1,0 +1,179 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="CoolPayFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">\CoolPay\Payment\Model\Ui\ConfigProvider::CODE</argument>
+            <argument name="infoBlockType" xsi:type="string">CoolPay\Payment\Block\Info</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="valueHandlerPool" xsi:type="object">CoolPayValueHandlerPool</argument>
+            <argument name="commandPool" xsi:type="object">CoolPayCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <virtualType name="CoolPayConfig" type="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">\CoolPay\Payment\Model\Ui\ConfigProvider::CODE</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Commands infrastructure -->
+    <virtualType name="CoolPayCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="authorize" xsi:type="string">CoolPayAuthorizeCommand</item>
+                <item name="capture" xsi:type="string">CoolPayCaptureCommand</item>
+                <item name="cancel" xsi:type="string">CoolPayCancelCommand</item>
+                <item name="refund" xsi:type="string">CoolPayRefundCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Authorize command -->
+    <virtualType name="CoolPayAuthorizeCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">CoolPayAuthorizationRequest</argument>
+            <argument name="handler" xsi:type="object">CoolPayAuthorizationHandler</argument>
+            <argument name="transferFactory" xsi:type="object">CoolPay\Payment\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">CoolPay\Payment\Gateway\Http\Client\TransactionAuthorize</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Authorization Request -->
+    <virtualType name="CoolPayAuthorizationRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">CoolPay\Payment\Gateway\Request\AuthorizationRequest</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="CoolPay\Payment\Gateway\Request\AuthorizationRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">CoolPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Authorization Response handlers -->
+    <virtualType name="CoolPayAuthorizationHandler" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="txnid" xsi:type="string">CoolPay\Payment\Gateway\Response\TransactionIdHandler</item>
+                <item name="payment_link" xsi:type="string">CoolPay\Payment\Gateway\Response\PaymentLinkHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Capture command -->
+    <virtualType name="CoolPayCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">CoolPayCaptureRequest</argument>
+            <argument name="handler" xsi:type="object">CoolPayCaptureHandler</argument>
+            <argument name="transferFactory" xsi:type="object">CoolPay\Payment\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">CoolPay\Payment\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">CoolPay\Payment\Gateway\Http\Client\TransactionCapture</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Capture Request -->
+    <virtualType name="CoolPayCaptureRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">CoolPay\Payment\Gateway\Request\CaptureRequest</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="CoolPay\Payment\Gateway\Request\CaptureRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">CoolPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Capture Response handlers -->
+    <virtualType name="CoolPayCaptureHandler" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="txnid" xsi:type="string">CoolPay\Payment\Gateway\Response\TransactionIdHandler</item>
+                <item name="card_details" xsi:type="string">CoolPay\Payment\Gateway\Response\CardDetailsHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Cancel command -->
+    <virtualType name="CoolPayCancelCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">CoolPayCancelRequest</argument>
+            <argument name="handler" xsi:type="object">CoolPay\Payment\Gateway\Response\TransactionIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">CoolPay\Payment\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">CoolPay\Payment\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">CoolPay\Payment\Gateway\Http\Client\TransactionCancel</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Cancel Request -->
+    <virtualType name="CoolPayCancelRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">CoolPay\Payment\Gateway\Request\CancelRequest</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="CoolPay\Payment\Gateway\Request\CancelRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">CoolPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Refund Command -->
+    <virtualType name="CoolPayRefundCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">CoolPayRefundRequest</argument>
+            <argument name="handler" xsi:type="object">CoolPay\Payment\Gateway\Response\TransactionIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">CoolPay\Payment\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">CoolPay\Payment\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">CoolPay\Payment\Gateway\Http\Client\TransactionRefund</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="CoolPayRefundRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">CoolPay\Payment\Gateway\Request\RefundRequest</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="CoolPay\Payment\Gateway\Request\RefundRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">CoolPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="CoolPayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">CoolPayConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="CoolPayConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">CoolPayConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="CoolPay\Payment\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">CoolPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Around plugin to set order status -->
+    <type name="Magento\Sales\Model\Order\Payment\State\CommandInterface">
+        <plugin name="coolpay_set_order_status" type="CoolPay\Payment\Plugin\Model\Order\Payment\State\CommandInterface" sortOrder="1" />
+    </type>
+</config>
